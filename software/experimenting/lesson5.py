@@ -49,7 +49,18 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import numpy as np
 import sys
-import glFreeType 
+import glFreeType
+from math import cos
+from Image import *
+
+# Python 2.2 defines these directly
+try:
+	True
+except NameError:
+	True = 1==1
+	False = 1==0
+
+	
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
 ESCAPE = '\033'
@@ -57,12 +68,10 @@ ESCAPE = '\033'
 # Number of the glut window.
 window = 0
 
-# Rotation angle for the triangle. 
 rquadZ = 0.0
-
 # Rotation angle for the quadrilateral.
 rquadX = 0.0
-our_font = None
+
 cubeLoctions = np.array([[ 0. ,  0. ,  0. ],
        [ 2.2,  0. ,  0. ],
        [ 4.4,  0. ,  0. ],
@@ -91,53 +100,50 @@ cubeLoctions = np.array([[ 0. ,  0. ,  0. ],
        [ 2.2,  4.4, -4.4],
        [ 0. ,  0. ,  0. ]])
 
-def drawText( value, x,y,  windowHeight, windowWidth, step = 18 ):
-    """Draw the given text at given 2D position in window
-    """
-    glMatrixMode(GL_PROJECTION);
-    # For some reason the GL_PROJECTION_MATRIX is overflowing with a single push!
-    # glPushMatrix()
-    matrix = glGetDouble( GL_PROJECTION_MATRIX )
-    
-    glLoadIdentity();
-    glOrtho(0.0, windowHeight or 32, 0.0, windowWidth or 32, -1.0, 1.0)
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glRasterPos2i(x, y);
-    lines = 0
-##	import pdb
-##	pdb.set_trace()
-    for character in value:
-        if character == '\n':
-            glRasterPos2i(x, y-(lines*18))
-        else:
-            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, ord(character));
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    # For some reason the GL_PROJECTION_MATRIX is overflowing with a single push!
-    # glPopMatrix();
-    glLoadMatrixd( matrix ) # should have un-decorated alias for this...
-    
-    glMatrixMode(GL_MODELVIEW);
-    
+def LoadTextures():
+        global textures
+        textures = glGenTextures(26)
+
+        for x in range(0, 26):
+	
+                image = open(str(x+1)+".bmp")
+                
+                ix = image.size[0]
+                iy = image.size[1]
+                image = image.tostring("raw", "RGBX", 0, -1)
+                
+                # Create MipMapped Texture
+                glBindTexture(GL_TEXTURE_2D, int(textures[x]))
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR)
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST)
+                gluBuild2DMipmaps(GL_TEXTURE_2D, 3, ix, iy, GL_RGBA, GL_UNSIGNED_BYTE, image)
+	
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def InitGL(Width, Height):
-    global our_font
+    global quadratic
+    LoadTextures()
+
+    quadratic = gluNewQuadric()
+    gluQuadricNormals(quadratic, GLU_SMOOTH)		# Create Smooth Normals (NEW) 
+    gluQuadricTexture(quadratic, GL_TRUE)			# Create Texture Coords (NEW)
+    glEnable(GL_TEXTURE_2D)
     # We call this right after our OpenGL window is created.
     glClearColor(0.0, 0.0, 0.0, 0.0)	# This Will Clear The Background Color To Black
     glClearDepth(1.0)					# Enables Clearing Of The Depth Buffer
     glDepthFunc(GL_LESS)				# The Type Of Depth Test To Do
     glEnable(GL_DEPTH_TEST)				# Enables Depth Testing
     glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
-
+    
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()					# Reset The Projection Matrix
 										# Calculate The Aspect Ratio Of The Window
     gluPerspective(45.0, float(Width)/float(Height), 0.1, 100.0)
 
     glMatrixMode(GL_MODELVIEW)
-    our_font = glFreeType.font_data ("Test.ttf", 16)
+  
+
+    return True
+
 
 # The function called when our window is resized (which shouldn't happen if you enable fullscreen, below)
 def ReSizeGLScene(Width, Height):
@@ -149,32 +155,19 @@ def ReSizeGLScene(Width, Height):
     glLoadIdentity()
     gluPerspective(45.0, float(Width)/float(Height), 0.1, 100.0)
     glMatrixMode(GL_MODELVIEW)
+    glLoadIdentity()
 
-def glut_print( x,  y,  font,  text, r,  g , b , a):
-
-    blending = False 
-    if glIsEnabled(GL_BLEND) :
-        blending = True
-
-    #glEnable(GL_BLEND)
-    glColor3f(1,1,1)
-    glRasterPos2f(x,y)
-    for ch in text :
-        glutBitmapCharacter( font , ctypes.c_int( ord(ch) ) )
-
-
-    if not blending :
-        glDisable(GL_BLEND)
 # The main drawing function. 
 def DrawGLScene():
-	global rquadZ, rquadX, our_font
-	
+        global rquadZ, rquadX, our_font
+        global textures, quadratic
+        
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+	glLoadIdentity()					# Reset The View 
 
         currentX =  0.0
         currentY = 0.0
         currentZ =  0.0
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	# Clear The Screen And The Depth Buffer	
-        glLoadIdentity();
         glTranslatef(-2.0,-2.0,-15.0);
         glTranslatef(3.2,3.2,-3.2);
         glRotatef(rquadX,0.0,1.0,0.0);		# Rotate The Cube On X, Y & Z
@@ -182,67 +175,65 @@ def DrawGLScene():
         glTranslatef(-3.2,-3.2,3.2);
 
 	
-##	glColor3ub (0xff, 0, 0)
-##
-##	glPushMatrix ()
-##	glLoadIdentity ()
-##	glRotatef (cnt1, 0, 0, 1)
-##	glScalef (1, 0.8 + 0.3* cos (cnt1/5), 1)
-##	glTranslatef (-180, 0, 0)
-##	our_font.glPrint (320, 240, "Active FreeType Text - %7.2f" % (cnt1))
-##	glPopMatrix ()
-	
         for x in range(0, 26):
                 # Move Right And Into The Screen
- 
-                glBegin(GL_QUADS);			# Start Drawing The Cube
+                
+        	glBindTexture(GL_TEXTURE_2D, int(textures[x]))
 
+                glBegin(GL_QUADS)				# Start Drawing The Cube
 
-                glColor3f(0.0,1.0,0.0);			# Set The Color To Blue
-                glVertex3f( 1.0, 1.0,-1.0);		# Top Right Of The Quad (Top)
-                glVertex3f(-1.0, 1.0,-1.0);		# Top Left Of The Quad (Top)
-                glVertex3f(-1.0, 1.0, 1.0);		# Bottom Left Of The Quad (Top)
-                glVertex3f( 1.0, 1.0, 1.0);		# Bottom Right Of The Quad (Top)
+                glColor3f(0.0,1.0,0.0);
+                # Front Face (note that the texture's corners have to match the quad's corners)
+                glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -1.0,  1.0)	# Bottom Left Of The Texture and Quad
+                glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, -1.0,  1.0)	# Bottom Right Of The Texture and Quad
+                glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0,  1.0)	# Top Right Of The Texture and Quad
+                glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0,  1.0)	# Top Left Of The Texture and Quad
 
-                glColor3f(1.0,0.5,0.0);			# Set The Color To Orange
-                glVertex3f( 1.0,-1.0, 1.0);		# Top Right Of The Quad (Bottom)
-                glVertex3f(-1.0,-1.0, 1.0);		# Top Left Of The Quad (Bottom)
-                glVertex3f(-1.0,-1.0,-1.0);		# Bottom Left Of The Quad (Bottom)
-                glVertex3f( 1.0,-1.0,-1.0);		# Bottom Right Of The Quad (Bottom)
+                glColor3f(0.0,1.0,1.0);
+                # Back Face
+                glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, -1.0, -1.0)	# Bottom Right Of The Texture and Quad
+                glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  1.0, -1.0)	# Top Right Of The Texture and Quad
+                glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  1.0, -1.0)	# Top Left Of The Texture and Quad
+                glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, -1.0, -1.0)	# Bottom Left Of The Texture and Quad
 
-                glColor3f(1.0,0.0,0.0);			# Set The Color To Red
-                glVertex3f( 1.0, 1.0, 1.0);		# Top Right Of The Quad (Front)
-                glVertex3f(-1.0, 1.0, 1.0);		# Top Left Of The Quad (Front)
-                glVertex3f(-1.0,-1.0, 1.0);		# Bottom Left Of The Quad (Front)
-                glVertex3f( 1.0,-1.0, 1.0);		# Bottom Right Of The Quad (Front)
+                glColor3f(0.5,1.0,1.0);
+                # Top Face
+                glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0, -1.0)	# Top Left Of The Texture and Quad
+                glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  1.0,  1.0)	# Bottom Left Of The Texture and Quad
+                glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  1.0,  1.0)	# Bottom Right Of The Texture and Quad
+                glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0, -1.0)	# Top Right Of The Texture and Quad
 
-                glColor3f(1.0,1.0,0.0);			# Set The Color To Yellow
-                glVertex3f( 1.0,-1.0,-1.0);		# Bottom Left Of The Quad (Back)
-                glVertex3f(-1.0,-1.0,-1.0);		# Bottom Right Of The Quad (Back)
-                glVertex3f(-1.0, 1.0,-1.0);		# Top Right Of The Quad (Back)
-                glVertex3f( 1.0, 1.0,-1.0);		# Top Left Of The Quad (Back)
+                glColor3f(0.5,0.5,0.5);
+                # Bottom Face	   
+                glTexCoord2f(1.0, 1.0); glVertex3f(-1.0, -1.0, -1.0)	# Top Right Of The Texture and Quad
+                glTexCoord2f(0.0, 1.0); glVertex3f( 1.0, -1.0, -1.0)	# Top Left Of The Texture and Quad
+                glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, -1.0,  1.0)	# Bottom Left Of The Texture and Quad
+                glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, -1.0,  1.0)	# Bottom Right Of The Texture and Quad
 
-                glColor3f(0.0,0.0,1.0);			# Set The Color To Blue
-                glVertex3f(-1.0, 1.0, 1.0);		# Top Right Of The Quad (Left)
-                glVertex3f(-1.0, 1.0,-1.0);		# Top Left Of The Quad (Left)
-                glVertex3f(-1.0,-1.0,-1.0);		# Bottom Left Of The Quad (Left)
-                glVertex3f(-1.0,-1.0, 1.0);		# Bottom Right Of The Quad (Left)
+                glColor3f(1.0,0.5,0.25);
+                # Right face
+                glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, -1.0, -1.0)	# Bottom Right Of The Texture and Quad
+                glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0, -1.0)	# Top Right Of The Texture and Quad
+                glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  1.0,  1.0)	# Top Left Of The Texture and Quad
+                glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, -1.0,  1.0)	# Bottom Left Of The Texture and Quad
 
-                glColor3f(1.0,0.0,1.0);			# Set The Color To Violet
-                glVertex3f( 1.0, 1.0,-1.0);		# Top Right Of The Quad (Right)
-                glVertex3f( 1.0, 1.0, 1.0);		# Top Left Of The Quad (Right)
-                glVertex3f( 1.0,-1.0, 1.0);		# Bottom Left Of The Quad (Right)
-                glVertex3f( 1.0,-1.0,-1.0);		# Bottom Right Of The Quad (Right)
-                glEnd();				# Done Drawing The Quad
-
+                glColor3f(0.25,.75,0.25);
+                # Left Face
+                glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -1.0, -1.0)	# Bottom Left Of The Texture and Quad
+                glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, -1.0,  1.0)	# Bottom Right Of The Texture and Quad
+                glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  1.0,  1.0)	# Top Right Of The Texture and Quad
+                glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  1.0, -1.0)	# Top Left Of The Texture and Quad
+                
+                glEnd();				# Done Drawing The Cube
                 currentX = cubeLoctions[x+1][0] - cubeLoctions[x][0]
                 currentY = cubeLoctions[x+1][1] - cubeLoctions[x][1]
                 currentZ = cubeLoctions[x+1][2] - cubeLoctions[x][2]
         	glTranslatef(currentX,currentY,currentZ);
         
+        
                         
                 
-                
+                        
  
 	# What values to use?  Well, if you have a FAST machine and a FAST 3D Card, then
 	# large values make an unpleasant display with flickering and tearing.  I found that
@@ -254,18 +245,11 @@ def DrawGLScene():
 	glutSwapBuffers()
 
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)  
-##def keyPressed(*args):
-##	# If escape is pressed, kill everything.
-##    if args[0] == ESCAPE:
-##	    sys.exit()
-
-	    # The function called whenever a key is pressed
 def keyPressed(key, x, y):
         global rquadX,rquadZ
         # If escape is pressed, kill everything.
         key = string.upper(key)
         if key == ESCAPE:
-                our_font.release ()
                 sys.exit()
         elif key == 'J':
                 rquadX = rquadX - 1.15
@@ -285,7 +269,7 @@ def main():
 	#  RGBA color
 	# Alpha components supported 
 	# Depth buffer
-	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH)
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
 	
 	# get a 640 x 480 window 
 	glutInitWindowSize(480, 480)
