@@ -65,12 +65,20 @@ except NameError:
 # so instead of saying: ESCAPE = 27, we use the following.
 ESCAPE = '\033'
 
+RETURN = '\015'
+
 # Number of the glut window.
 window = 0
 
 rquadZ = 0.0
-# Rotation angle for the quadrilateral.
 rquadX = 0.0
+
+axisSelect = 0
+
+cubeTmpSelect = 0
+cubeSelect = 0
+
+move = 0.1
 
 cubeLoctions = np.array([[ 0. ,  0. ,  0. ],
        [ 2.2,  0. ,  0. ],
@@ -161,6 +169,7 @@ def ReSizeGLScene(Width, Height):
 def DrawGLScene():
         global rquadZ, rquadX, our_font
         global textures, quadratic
+        global cubeLoctions
         
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 	glLoadIdentity()					# Reset The View 
@@ -244,22 +253,124 @@ def DrawGLScene():
 	#  since this is double buffered, swap the buffers to display what just got drawn. 
 	glutSwapBuffers()
 
+def getCubeHitting(cubeNumber,deltaX,deltaY,deltaZ):
+        for x in range(0, 26):
+                if ((deltaX<0) && (([cubeNumber-1][0]+deltaX)<cubeLoctions[x][0]<=[cubeNumber-1][0])):
+                        return x
+                elif ((deltaX>0) && ([cubeNumber-1][0]<=cubeLoctions[x][0]<([cubeNumber-1][0]+deltaX))):
+                        return x
+                elif ((deltaY<0) && (([cubeNumber-1][1]+deltaX)<cubeLoctions[x][1]<=[cubeNumber-1][1])):
+                        return x
+                elif ((deltaY>0) && ([cubeNumber-1][1]<=cubeLoctions[x][1]<([cubeNumber-1][1]+deltaX))):
+                        return x
+                elif ((deltaZ<0) && (([cubeNumber-1][2]+deltaX)<cubeLoctions[x][2]<=[cubeNumber-1][2])):
+                        return x
+                elif ((deltaZ>0) && ([cubeNumber-1][2]<=cubeLoctions[x][2]<([cubeNumber-1][2]+deltaX))):
+                        return x
+
+        return -1
+
+def moveCube(cubeNumber,deltaX,deltaY,deltaZ):
+        global cubeLoctions
+        print "moveCube "+ str(deltaX)+" "+str(deltaY)+" "+str(deltaZ)+" "+str(cubeNumber)
+        print "cubeLoctions "+str(cubeLoctions[cubeNumber-1][0])+" "+str(cubeLoctions[cubeNumber-1][1])+" "+str(cubeLoctions[cubeNumber-1][2])+" "
+        cubeToMoveNumber = getCubeHitting(cubeNumber,deltaX,deltaY,deltaZ)
+        cubeLoctions[cubeNumber-1][0] = cubeLoctions[cubeNumber-1][0] + deltaX
+        cubeLoctions[cubeNumber-1][1] = cubeLoctions[cubeNumber-1][1] + deltaY
+        cubeLoctions[cubeNumber-1][2] = cubeLoctions[cubeNumber-1][2] + deltaZ
+
+def buildTempSelect(select):
+        global cubeTmpSelect
+        if (cubeTmpSelect==0):
+                cubeTmpSelect = select
+        else:
+                cubeTmpSelect=cubeTmpSelect*10 + select
+
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)  
 def keyPressed(key, x, y):
-        global rquadX,rquadZ
-        # If escape is pressed, kill everything.
+        selected = 0
+        global rquadX,rquadZ,cubeTmpSelect,cubeSelect,axisSelect,move
+        
         key = string.upper(key)
+        
         if key == ESCAPE:
                 sys.exit()
         elif key == 'J':
                 rquadX = rquadX - 1.15
-        elif key == 'L': #  switch the texture
+        elif key == 'L': 
                 rquadX = rquadX + 1.15
         elif key == 'K':
                 rquadZ = rquadZ - 1.15
-        elif key == 'I': #  switch the texture
+        elif key == 'I': 
                 rquadZ = rquadZ + 1.15
-
+        elif key == '1':
+                selected = 1
+                print "Pressed 1"
+                buildTempSelect(selected)
+        elif key == '2':
+                selected = 2
+                print "Pressed 2"
+                buildTempSelect(selected)
+        elif key == '3':
+                selected = 3
+                print "Pressed 3"
+                buildTempSelect(selected)
+        elif key == '4':
+                selected = 4
+                print "Pressed 4"
+                buildTempSelect(selected)
+        elif key == '5':
+                selected = 5
+                print "Pressed 5"
+                buildTempSelect(selected)
+        elif key == '6':
+                selected = 6
+                print "Pressed 6"
+                buildTempSelect(selected)
+        elif key == '7':
+                selected = 7
+                print "Pressed 7"
+                buildTempSelect(selected)
+        elif key == '8':
+                selected = 8
+                print "Pressed 8"
+                buildTempSelect(selected)
+        elif key == '9':
+                selected = 9
+                print "Pressed 9"
+                buildTempSelect(selected)
+        elif key == RETURN:
+                print "Pressed RETURN"
+                cubeSelect = cubeTmpSelect
+                cubeTmpSelect = 0
+        elif key == 'A':
+                print "Pressed A and Axis is "+ str(axisSelect)+" and cube number " + str(cubeSelect)
+                if (axisSelect == 0):
+                        moveCube(cubeSelect,move,0.0,0.0)
+                elif (axisSelect == 1):
+                        moveCube(cubeSelect,0.0,move,0.0)
+                elif (axisSelect == 2):
+                        moveCube(cubeSelect,0.0,0.0,move)
+        elif key == 'D':
+                print "Pressed D and Axis is "+ str(axisSelect)+" and cube number " + str(cubeSelect)
+                if (axisSelect == 0):
+                        moveCube(cubeSelect,-move,0.0,0.0)
+                elif (axisSelect == 1):
+                        moveCube(cubeSelect,0.0,-move,0.0)
+                elif (axisSelect == 2):
+                        moveCube(cubeSelect,0.0,0.0,-move)
+        elif key == 'X':
+                print "Selected X Axis"
+                axisSelect = 0
+        elif key == 'Y':
+                print "Selected Y Axis"
+                axisSelect = 1
+        elif key == 'Z':
+                print "Selected Z Axis"
+                axisSelect = 2
+        
+        
+                
 def main():
 	global window
 	glutInit(sys.argv)
