@@ -58,6 +58,7 @@ ESCAPE = '\033'
 
 RETURN = '\015'
 
+blockSeperator = 0.01
 xLowerLimit = 0.0
 xHigherLimit = 4.4
 yLowerLimit = 0.0
@@ -78,63 +79,34 @@ cubeSelect = 0
 
 move = 0.1
 
-cubeLoctions = np.array([[ 0. ,  0. ,  0. ],
-       [ 2.2,  0. ,  0. ],
-       [ 4.4,  0. ,  0. ],
-       [ 0. ,  0. , -2.2],
-       [ 2.2,  0. , -2.2],
-       [ 4.4,  0. , -2.2],
-       [ 0. ,  0. , -4.4],
-       [ 2.2,  0. , -4.4],
-       [ 4.4,  0. , -4.4],
-       [ 0. ,  2.2,  0. ],
-       [ 2.2,  2.2,  0. ],
-       [ 4.4,  2.2,  0. ],
-       [ 0. ,  2.2, -2.2],
-       [ 2.2,  2.2, -2.2],
-       [ 4.4,  2.2, -2.2],
-       [ 0. ,  2.2, -4.4],
-       [ 2.2,  2.2, -4.4],
-       [ 4.4,  2.2, -4.4],
-       [ 0. ,  4.4,  0. ],
-       [ 2.2,  4.4,  0. ],
-       [ 4.4,  4.4,  0. ],
-       [ 0. ,  4.4, -2.2],
-       [ 2.2,  4.4, -2.2],
-       [ 4.4,  4.4, -2.2],
-       [ 0. ,  4.4, -4.4],
-       [ 2.2,  4.4, -4.4],
-       [ 0. ,  0. ,  0. ]])
+cubeLoctions = np.array([[ 0.0,  0.0,  0.0],
+       [ 2.0 + blockSeperator,  0.0,  0.0],
+       [ 4.0 + 2*blockSeperator,  0.0,  0.0],
+       [ 0.0 ,  0.0 , -2.0 - blockSeperator],
+       [ 2.0 + blockSeperator,  0.0, -2.0 - blockSeperator],
+       [ 4.0 + 2*blockSeperator,  0.0, -2.0 - blockSeperator],
+       [ 0.0,  0.0 , -4.0 - 2*blockSeperator],
+       [ 2.0 + blockSeperator,  0.0 , -4.0 - 2*blockSeperator],
+       [ 4.0 + 2*blockSeperator,  0.0 , -4.0 - 2*blockSeperator],
+       [ 0.0,  2.0 + blockSeperator,  0.0 ],
+       [ 2.0 + blockSeperator,  2.0 + blockSeperator,  0.0 ],
+       [ 4.0 + 2*blockSeperator,  2.0 + blockSeperator,  0.0 ],
+       [ 0.0,  2.0 + blockSeperator, -2.0 - blockSeperator],
+       [ 2.0 + blockSeperator,  2.0 + blockSeperator, -2.0 - blockSeperator],
+       [ 4.0 + 2*blockSeperator,  2.0 + blockSeperator, -2.0 - blockSeperator],
+       [ 0.0,  2.0 + blockSeperator, -4.0 - 2*blockSeperator],
+       [ 2.0 + blockSeperator,  2.0 + blockSeperator, -4.0 - 2*blockSeperator],
+       [ 4.0 + 2*blockSeperator,  2.0 + blockSeperator, -4.0 - 2*blockSeperator],
+       [ 0.0,  4.0 + 2*blockSeperator,  0.0 ],
+       [ 2.0 + blockSeperator,  4.0 + 2*blockSeperator,  0.0 ],
+       [ 4.0 + 2*blockSeperator,  4.0 + 2*blockSeperator,  0.0 ],
+       [ 0.0,  4.0 + 2*blockSeperator, -2.0 - blockSeperator],
+       [ 2.0 + blockSeperator,  4.0 + 2*blockSeperator, -2.0 - blockSeperator],
+       [ 4.0 + 2*blockSeperator,  4.0 + 2*blockSeperator, -2.0 - blockSeperator],
+       [ 0.0,  4.0 + 2*blockSeperator, -4.0 - 2*blockSeperator],
+       [ 2.0 + blockSeperator,  4.0 + 2*blockSeperator, -4.0 - 2*blockSeperator],
+       [ 0.0,  0.0 ,  0.0 ]])
 
-#===============================================================================
-# cubeLoctions = np.array([[ 0.0,  0.0,  0.0],
-#        [ 2.0,  0.0,  0.0],
-#        [ 4.0,  0.0,  0.0],
-#        [ 0.0,  0.0, -2.0],
-#        [ 2.0,  0.0, -2.0],
-#        [ 4.0,  0.0, -2.0],
-#        [ 0.0,  0.0, -4.0],
-#        [ 2.0,  0.0, -4.0],
-#        [ 4.0,  0.0, -4.0],
-#        [ 0.0,  2.0,  0.0],
-#        [ 2.0,  2.0,  0.0],
-#        [ 4.0,  2.0,  0.0],
-#        [ 0.0,  2.0, -2.0],
-#        [ 2.0,  2.0, -2.0],
-#        [ 4.0,  2.0, -2.0],
-#        [ 0.0,  2.0, -4.0],
-#        [ 2.0,  2.0, -4.0],
-#        [ 4.0,  2.0, -4.0],
-#        [ 0.0,  4.0,  0.0],
-#        [ 2.0,  4.0,  0.0],
-#        [ 4.0,  4.0,  0.0],
-#        [ 0.0,  4.0, -2.0],
-#        [ 2.0,  4.0, -2.0],
-#        [ 4.0,  4.0, -2.0],
-#        [ 0.0,  4.0, -4.0],
-#        [ 2.0,  4.0, -4.0],
-#        [ 0.0,  0.0,  0.0]])
-#===============================================================================
 
 def LoadTextures():
     global textures
