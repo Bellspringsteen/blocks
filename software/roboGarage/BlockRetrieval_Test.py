@@ -10,3 +10,7 @@ class BlockRetrievalTest(unittest.TestCase):
     def testFindLocationOfCarZero(self):
         self.assertEqual([0,0,0],self.blockRetrieval.getIndexForCarNumber(0))
         
+    def moveBlockOneToPositionTwo(self):
+        self.blockRetrieval.move(1,3);
+        self.assertEqual([2,0,0],self.blockRetrieval.getIndexForCarNumber(1))
+        
