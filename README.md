@@ -1,9 +1,7 @@
 Moving and Storing Blocks
 
+Check out the Video
 
+[Computer Animation](https://www.youtube.com/watch?v=ocgVXuBXRFA&feature=youtu.be)
 
-###Measurements-
-
-7 mm to 90mm =  83mm between vertical rods
-
-Ball bearing block = http://www.igus.com/wpck/default.aspx?Pagename=igubal_Stehlager_KST
+[Real Video](https://www.youtube.com/watch?v=ydqH1mR4aRw)
